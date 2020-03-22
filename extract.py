@@ -1,10 +1,10 @@
 import mne
 from xml.etree import ElementTree
 import numpy as np
-
+from constants import *
 
 #for reading annotations from xml file
-def extract_annots(path):
+def extract_anns(path):
   def parse_nsrr_annotations(file_path):
     tree = ElementTree.parse(file_path)
     root = tree.getroot()

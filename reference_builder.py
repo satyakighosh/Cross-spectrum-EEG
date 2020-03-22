@@ -1,9 +1,16 @@
 import os
-import time
 import numpy as np
+from extract import extract_anns, extract_data
+from constants import *
 
 
-start = time.time()
+
+def get_len_dict(eeg_dict):  
+  len_dict = {}
+  for i in eeg_dict.keys():
+    len_dict[i] = len(eeg_dict[i])
+  print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in len_dict.items()) + "}")
+
 
 class ReferenceBuilder:
 
@@ -17,7 +24,7 @@ class ReferenceBuilder:
     len_dict = {}
     for label in eeg_dict.keys():
       if len(eeg_dict[label]) == 0: return False
-      len_dict[i] = len(eeg_dict[label])
+      len_dict[label] = len(eeg_dict[label])
     #print(len_dict)
     return True
 
@@ -31,9 +38,12 @@ class ReferenceBuilder:
       ref = ref[0]
       #print(ref)
       ann_ref = ref[:-4] + '-nsrr.xml'
-      ann, onset, duration = extract_annots(self.ann_path + ann_ref)
+      
+      ann, onset, duration = extract_anns(self.ann_path + ann_ref)
+      if not len(onset) > NUM_SEG_PROCESSED_PER_PATIENT:        #number of segments in the data have to be >=  processed number of segments
+        continue
       eeg_dict, info_dict = extract_data(self.data_path + ref, ann, onset)
-      if self.is_dict_ok(eeg_dict):               #guarantees selection of dict with all labels present
+      if self.is_dict_ok(eeg_dict):        #guarantees selection of dict with all labels present
         fit_eeg_dicts.append(eeg_dict)
         refs.append(ref)
         ann_refs.append(ann_ref)
@@ -67,14 +77,12 @@ class ReferenceBuilder:
     for ref_patient in range(self.size):
       ref_data, ref_info = self.each_reference_data(fit_eeg_dicts[ref_patient])
       info_dicts.append(ref_info)
-      for label in range(6):
+      for label in range(NUM_SLEEP_STAGES):
         self.reference_segments[label].append(ref_data[label])
 
+  def get_len_dict(self, eeg_dict): 
 
-
-data_path = r"/content/drive/My Drive/NSRR/Data/"
-ann_path = r"/content/drive/My Drive/NSRR/Annotations/"
-size=5
-ref_builder = ReferenceBuilder(size, data_path, ann_path)
-ref_builder.build_refs()
-print(f"Reference building took {time.time()-start} seconds")
+    len_dict = {}
+    for i in eeg_dict.keys():
+      len_dict[i] = len(eeg_dict[i])
+    print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in len_dict.items()) + "}")
