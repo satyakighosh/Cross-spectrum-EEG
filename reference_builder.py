@@ -3,15 +3,6 @@ import numpy as np
 from extract import extract_anns, extract_data
 from constants import *
 
-
-
-def get_len_dict(eeg_dict):  
-  len_dict = {}
-  for i in eeg_dict.keys():
-    len_dict[i] = len(eeg_dict[i])
-  print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in len_dict.items()) + "}")
-
-
 class ReferenceBuilder:
 
   def __init__(self, size, data_path, ann_path):
@@ -79,10 +70,3 @@ class ReferenceBuilder:
       info_dicts.append(ref_info)
       for label in range(NUM_SLEEP_STAGES):
         self.reference_segments[label].append(ref_data[label])
-
-  def get_len_dict(self, eeg_dict): 
-
-    len_dict = {}
-    for i in eeg_dict.keys():
-      len_dict[i] = len(eeg_dict[i])
-    print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in len_dict.items()) + "}")

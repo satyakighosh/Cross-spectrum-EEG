@@ -5,7 +5,10 @@ SAMPLE_RATE = 125    #fixed for shhs1
 NUM_SLEEP_STAGES = 6   #fixed
 NUM_SEG_PROCESSED_PER_PATIENT = 50
 
-DATA_PATH = r"/content/drive/My Drive/NSRR/Data/"
-ANN_PATH = r"/content/drive/My Drive/NSRR/Annotations/"
+TRAIN_DATA_PATH = r"/content/drive/My Drive/NSRR/Data/train/"
+TRAIN_ANN_PATH = r"/content/drive/My Drive/NSRR/Annotations/train/"
+
+TEST_DATA_PATH = r"/content/drive/My Drive/NSRR/Data/test/"
+TEST_ANN_PATH = r"/content/drive/My Drive/NSRR/Annotations/test/"
 
 REF_SEG_PER_CLASS = 2
