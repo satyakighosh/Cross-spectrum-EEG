@@ -2,6 +2,7 @@ import numpy as np
 import time
 import os
 import random
+from collections import Counter
 
 from extract import extract_anns, extract_data
 from reference_builder import ReferenceBuilder
@@ -40,11 +41,12 @@ class DatasetBuilder:
       label = 4
     else:
       indices = [i for i in len_dict.keys() if len_dict[i] != 0]
+      print(indices)
       label = int(np.random.choice(indices))
     print(info_dict)
-    print("*************************")
+    
     #label = np.random.choice()
-    seg_no = np.random.choice(len(eeg_dict[label]))  #select random segment of random patient
+    seg_no = np.random.choice(len(eeg_dict[label]))  #select random segment of a random class of a random patient
     return (label, eeg_dict[label][seg_no])
     
 
@@ -91,27 +93,28 @@ class DatasetBuilder:
 
   def create_dataset(self):
     
-    NUM_DATA_SEGMENTS_TO_PAIR_WITH = 5   #num segments in bank to pair with all the ref segments
-    
+    NUM_DATA_SEGMENTS_TO_PAIR_WITH = self.size   #num segments to pair with all the ref segments
+    selected_labels = []
     for i in range(NUM_DATA_SEGMENTS_TO_PAIR_WITH):
       
       #x = np.random.choice(list(range(len(self.segment_bank))), size=1)
       #selected_tuple = self.segment_bank[int(x)] #<-tuple
       selected_tuple = self.extract_random_segment()
+      selected_labels.append(selected_tuple[0])
       print(f"selected_label : {selected_tuple[0]}")
       
       for label in range(NUM_SLEEP_STAGES):         #label of ref_segment
         self.generate_segment_pairs(selected_tuple, label)
 
       print(f"Pairing with patient {i+1} took {time.time()-start} seconds")
-    
+      print("*************************")
     random.shuffle(self.data_dict)
+    print(Counter(selected_labels))
 
 
 
 
-
-dataset = DatasetBuilder(size=5)  #size->number of patients from which segment bank will be made
+dataset = DatasetBuilder(size=50)  #size->number of patients from which segment bank will be made
 #dataset.create_segment_bank()
 dataset.create_dataset() #already shuffled
 print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in dataset.data_dict.items()) + "}")
@@ -121,5 +124,5 @@ print(dataset.data_dict[0])
 print(dataset.data_dict[0][0])
 print(dataset.data_dict[0][0][0])
 print(dataset.data_dict[0][0][1].shape)
-print("Saving trainset")
+print("Saving dataset")
 np.save('dataset', dataset.data_dict)
