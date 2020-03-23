@@ -12,12 +12,12 @@ from utils import get_len_dict
 
 start = time.time()
 
-class TrainDatasetBuilder:
+class DatasetBuilder:
 
   def __init__(self, size): #size->number of patients from which segment bank will be made
     self.size = size
     self.segment_bank = []                 #list of tuples or random segments from random patients
-    self.train_set = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
+    self.data_dict = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
     
     
     ref_builder = ReferenceBuilder(REF_SEG_PER_CLASS, TRAIN_DATA_PATH, TRAIN_ANN_PATH)
@@ -87,9 +87,9 @@ class TrainDatasetBuilder:
       F_rs = feature_gen(t1, s1, t2, s2)
       F_rs_avg.append(F_rs)
     
-    self.train_set[label].append((selected_label, np.mean(F_rs_avg, axis=0)))
+    self.data_dict[label].append((selected_label, np.mean(F_rs_avg, axis=0)))
 
-  def create_trainset(self):
+  def create_dataset(self):
     
     NUM_DATA_SEGMENTS_TO_PAIR_WITH = 5   #num segments in bank to pair with all the ref segments
     
@@ -105,4 +105,21 @@ class TrainDatasetBuilder:
 
       print(f"Pairing with patient {i+1} took {time.time()-start} seconds")
     
-    random.shuffle(self.train_set)
+    random.shuffle(self.data_dict)
+
+
+
+
+
+dataset = DatasetBuilder(size=5)  #size->number of patients from which segment bank will be made
+#dataset.create_segment_bank()
+dataset.create_dataset() #already shuffled
+print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in dataset.data_dict.items()) + "}")
+
+get_len_dict(dataset.data_dict)
+print(dataset.data_dict[0])
+print(dataset.data_dict[0][0])
+print(dataset.data_dict[0][0][0])
+print(dataset.data_dict[0][0][1].shape)
+print("Saving trainset")
+np.save('dataset', dataset.data_dict)

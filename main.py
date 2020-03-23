@@ -21,7 +21,7 @@ for svm_id in range(NUM_SLEEP_STAGES):
   SVMs[svm_id].fit(X_train, Y_train)
   Y_pred = SVMs[svm_id].predict(X_test)
   print("*******************************")
-  print(f"Test performance of SVM-{svm_id}:")
+  print(f"Test performance of SVM{svm_id}")
   print(f"Accuracy: {accuracy_score(Y_test, Y_pred)}")
   print(f"Confusion matrix: {confusion_matrix(Y_test, Y_pred)}")
   print(f"Classification Report: {classification_report(Y_test, Y_pred)}")
