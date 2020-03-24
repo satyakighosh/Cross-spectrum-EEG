@@ -17,7 +17,7 @@ class DatasetBuilder:
 
   def __init__(self, size): #size->number of patients from which segment bank will be made
     self.size = size
-    self.segment_bank = []                 #list of tuples or random segments from random patients
+    #self.segment_bank = []                 #list of tuples or random segments from random patients
     self.data_dict = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
     
     
@@ -37,7 +37,7 @@ class DatasetBuilder:
     for i in eeg_dict.keys(): 
       len_dict[i] = len(eeg_dict[i])
     
-    if len_dict[4] != 0:    #to increase probability of getting very rare label 4
+    if len_dict[4] and np.random.random() < 0.3 != 0:    #to increase probability of getting very rare label 4
       label = 4
     else:
       indices = [i for i in len_dict.keys() if len_dict[i] != 0]
@@ -86,10 +86,11 @@ class DatasetBuilder:
       # print(s1.shape)
       # print(s2.shape)
       # print("*************************")
-      F_rs = feature_gen(t1, s1, t2, s2)
-      F_rs_avg.append(F_rs)
+      F = feature_gen(t1, s1, t2, s2)
+      F_avg.append(F)
     
-    self.data_dict[label].append((selected_label, np.mean(F_rs_avg, axis=0)))
+    self.data_dict[label].append((selected_label, np.mean(F_avg, axis=0)))
+
 
   def create_dataset(self):
     
@@ -114,15 +115,15 @@ class DatasetBuilder:
 
 
 
-dataset = DatasetBuilder(size=50)  #size->number of patients from which segment bank will be made
+dataset = DatasetBuilder(size=NUM_CHOSEN_PATIENTS)  #size->number of patients from which random segment  will be chosen
 #dataset.create_segment_bank()
 dataset.create_dataset() #already shuffled
-print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in dataset.data_dict.items()) + "}")
+#print("{" + "\n".join("{!r}: {!r},".format(k, v) for k, v in dataset.data_dict.items()) + "}")
 
 get_len_dict(dataset.data_dict)
-print(dataset.data_dict[0])
-print(dataset.data_dict[0][0])
-print(dataset.data_dict[0][0][0])
-print(dataset.data_dict[0][0][1].shape)
+# print(dataset.data_dict[0])
+# print(dataset.data_dict[0][0])
+# print(dataset.data_dict[0][0][0])
+# print(dataset.data_dict[0][0][1].shape)
 print("Saving dataset")
-np.save('dataset', dataset.data_dict)
+np.save('/content/drive/My Drive/Cross-spectrum-EEG/dataset', dataset.data_dict)

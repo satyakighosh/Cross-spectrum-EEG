@@ -22,11 +22,14 @@ def split_dataset(dic, svm_id, test_size):
 
   X = np.array(X)
   Y = np.array(Y)
-  print(Y)
+  # print("Original labels:")
+  # print(Y)
+  # print(f"svm_id:{svm_id}")
   pos_indices = np.where(Y == svm_id)[0]
   Y[np.where(Y != svm_id)[0].tolist()] = -1
   Y[np.where(Y == svm_id)[0].tolist()] = 1
   Y[np.where(Y == -1)[0].tolist()] = 0
   assert np.all(np.where(Y == 1)[0] == pos_indices)
-  print(Y)
+  # print("Binarized labels:")
+  # print(Y)
   return train_test_split(X, Y, test_size=test_size)

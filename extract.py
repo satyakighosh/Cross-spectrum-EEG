@@ -44,7 +44,7 @@ def extract_anns(path):
   return ann, onset, duration
 
 
-#getting the EEG data->outputs labelwise dict of segments of EEG and another info dict
+#getting the EEG data for each patient->outputs labelwise dict of segments of EEG and another info dict
 def extract_data(path, ann, onset):
   raw = mne.io.read_raw_edf(path, verbose=False)
   row_idx = np.array([2])      #taking 3rd channel(EEG)
@@ -54,7 +54,7 @@ def extract_data(path, ann, onset):
   x = list(data.reshape(-1,))
   
   label_to_signal_mapping = {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}
-  for i in range(NUM_SEG_PROCESSED_PER_PATIENT):           #CHANGE <-no. of segments
+  for i in range(NUM_SEG_PROCESSED_PER_PATIENT):           
     label = SLEEP_STAGES[ann[i]]
     #print(onset[i], onset[i+1], label)
     label_to_signal_mapping[label].append(x[SAMPLE_RATE * onset[i] : SAMPLE_RATE * onset[i+1]])

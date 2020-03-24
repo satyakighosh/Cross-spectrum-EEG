@@ -35,19 +35,19 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
   #print(f"s_min: {s_min}, s_max: {s_max}")
   #print(f"t_min: {t_min}, t_max: {t_max}")
   #print(f"np.absolute((s_max - s_min) * (t_max - t_min)):{x}")
-
-  f4 = W12_sum/x
-  f5 = np.sqrt((np.sum((f4 - W12) ** 2))/x)
+  eps = 1e-5
+  f4 = W12_sum/(x+eps)
+  f5 = np.sqrt((np.sum((f4 - W12) ** 2))/(x+eps))
 
   f6 = s_max     #doubt
   f7 = t_max      #doubt
   f8 = s_min      #doubt
 
-  f9 = 5*W12_sum/x
+  f9 = 5*W12_sum/(x+eps)
   f10 = np.sum(W12 ** 2)
-  f11 = f10/x
+  f11 = f10/(x+eps)
   f12 = np.sqrt(f11)
-  f13 = W12_sum/np.exp(x)
+  f13 = W12_sum/(np.exp(x)+eps)
   #f14 = 
   #f15 = f14/x
   #f16 = np.sqrt((f14**2)/x)
@@ -105,7 +105,10 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
 
   # f42 = R12_sum
 
-  F = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14]
+  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14]
+  F = []
+  for i in f:
+    F.append(i/1e4)
   # for i in range(len(F)):
   #   print(f"F{i+1}: {F[i]}")
   return np.array(F)
