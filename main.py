@@ -9,7 +9,7 @@ from utils import get_len_dict, split_dataset
 
 start = time.time()
 
-
+#this is just for testing-
 dataset = np.load('/content/drive/My Drive/Cross-spectrum-EEG/dataset.npy', allow_pickle=True)
 dic = dataset.reshape(-1,1)[0][0]
 test_size = 0.20
