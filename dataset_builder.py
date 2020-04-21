@@ -26,6 +26,40 @@ class DatasetBuilder:
     print(f"Reference building took {time.time()-start} seconds")
     get_len_dict(ref_builder.reference_segments)
     self.ref_segments = ref_builder.reference_segments
+  
+
+
+
+  def extract_random_segment_with_specific_label(self,label):   #have to try and make it class balanced
+    
+    random_patient = list(np.random.choice(os.listdir(TRAIN_DATA_PATH), size=1, replace=True))[0] #select random patient
+    patient_ann = random_patient[:-4] + '-nsrr.xml'
+    ann, onset, duration = extract_anns(TRAIN_ANN_PATH + patient_ann)
+    eeg_dict, info_dict = extract_data(TRAIN_DATA_PATH + random_patient, ann, onset)
+    #len_dict = {}
+    #for i in eeg_dict.keys(): 
+    # len_dict[i] = len(eeg_dict[i])
+    while len(eeg_dict[label])==0:
+    
+      random_patient = list(np.random.choice(os.listdir(TRAIN_DATA_PATH), size=1, replace=True))[0] #select random patient
+      patient_ann = random_patient[:-4] + '-nsrr.xml'
+      ann, onset, duration = extract_anns(TRAIN_ANN_PATH + patient_ann)
+      eeg_dict, info_dict = extract_data(TRAIN_DATA_PATH + random_patient, ann, onset)
+      
+    
+    #if len_dict[4] and np.random.random() < 0.3 != 0:    #to increase probability of getting very rare label 4
+    #  label = 4
+    #else:
+    #indices = [i for i in len_dict.keys() if len_dict[i] != 0]
+    #print(indices)
+    #label = int(np.random.choice(indices))
+    print(info_dict)
+    
+    #label = np.random.choice()
+    seg_no = np.random.choice(len(eeg_dict[label]))  #select random segment of a random class of a random patient
+    return (label, eeg_dict[label][seg_no])
+
+
 
   def extract_random_segment(self):   #have to try and make it class balanced
     
@@ -72,7 +106,7 @@ class DatasetBuilder:
     selected_segment = selected_tuple[1]
     t, s = np.arange(len(selected_segment)), np.array(selected_segment)
     #l = 1 if selected_label == label else 0
-    F_rs_avg = []
+    F_avg = []
     for ref_segment in self.ref_segments[label]:
       t1, s1 = t, s
       t2, s2 = np.arange(len(ref_segment)), np.array(ref_segment)
@@ -96,6 +130,15 @@ class DatasetBuilder:
     
     NUM_DATA_SEGMENTS_TO_PAIR_WITH = self.size   #num segments to pair with all the ref segments
     selected_labels = []
+    
+    #this segment creates positive examples for the SVMs  
+    for key in range(NUM_SLEEP_STAGES):
+      for i in range(NUM_DATA_SEGMENTS_TO_PAIR_WITH):
+        print(f"Generating {i}th positive example for SVM-{key}:")
+        tuple_positive_label=self.extract_random_segment_with_specific_label(key)
+        print(f"selected_label : {tuple_positive_label[0]}")
+        self.generate_segment_pairs(tuple_positive_label,key)
+
     for i in range(NUM_DATA_SEGMENTS_TO_PAIR_WITH):
       
       #x = np.random.choice(list(range(len(self.segment_bank))), size=1)
@@ -109,6 +152,10 @@ class DatasetBuilder:
 
       print(f"Pairing with patient {i+1} took {time.time()-start} seconds")
       print("*************************")
+
+    
+
+
     random.shuffle(self.data_dict)
     print(Counter(selected_labels))
 
