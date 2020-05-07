@@ -35,7 +35,7 @@ def specific_patient_dataset(patient_no):
   return eeg_dict_list,len_dict
 
 for p in range(len(patient_list)):
-  _,_ = specific_patient_dataset(37)
+  _,_ = specific_patient_dataset(p)
 
 '''
 print(len(patient_list))

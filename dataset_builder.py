@@ -112,6 +112,10 @@ class DatasetBuilder:
     
     if len_dict[label] != 0:    
       num_seg_label = np.maximum(len_dict[label]//8, 1)           #positives
+      if label==4:
+        num_seg_label=len_dict[label]
+      if label==5:
+        num_seg_label=len_dict[label]//4
       #print(f"len_dict(positive):{len_dict[label]}Number of positive segments to be taken:{num_seg_label}")
 
       for ith_positive_segment in range(num_seg_label):                #adding the positive segments sequentially
