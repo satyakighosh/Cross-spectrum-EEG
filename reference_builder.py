@@ -70,3 +70,7 @@ class ReferenceBuilder:
       info_dicts.append(ref_info)
       for label in range(NUM_SLEEP_STAGES):
         self.reference_segments[label].append(ref_data[label])
+    print("Saving reference segments")
+    np.save('/content/drive/My Drive/Cross-spectrum-EEG/reference_segments.npy', self.reference_segments)    
+
+    

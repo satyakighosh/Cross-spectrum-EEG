@@ -10,7 +10,7 @@ from utils import get_len_dict, split_dataset
 start = time.time()
 
 #this is just for testing-2
-dataset = np.load('/content/drive/My Drive/Cross-spectrum-EEG/dataset.npy', allow_pickle=True)
+dataset = np.load('/content/drive/My Drive/Cross-spectrum-EEG/dataset_2.npy', allow_pickle=True)
 dic = dataset.reshape(-1,1)[0][0]
 test_size = 0.20
         
@@ -24,8 +24,8 @@ for svm_id in range(NUM_SLEEP_STAGES):
   # X_train[:] = [x / 1e4 for x in X_train]
   # X_test[:] = [x / 1e4 for x in X_test]
   
-  #print(f"Example of training feature vector: {X_train[svm_id]}")
-  #print(f"It's corresponding label: {Y_train[svm_id]}")
+  print(f"Example of training feature vector: {X_train[svm_id]}")
+  print(f"It's corresponding label: {Y_train[svm_id]}")
   SVMs[svm_id].fit(X_train, Y_train)
   #print("\n")
   Y_pred = SVMs[svm_id].predict(X_test)

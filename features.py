@@ -23,10 +23,10 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
       accum += i * j * W12[i, j]
       accum_sq += i**2 * j**2 * W12[i, j]
 
-  W12_sum = np.sum(W12)
+  W12_sum = np.sum(np.absolute(W12));
   #print(f"W12_sum:{W12_sum}")
-  f1 = accum/W12_sum
-  f2 = np.sqrt(accum_sq/W12_sum)
+  f1 = accum/W12_sum; #f1/=10
+  f2 = np.sqrt(accum_sq/W12_sum)#; f2/=10
   f3 = W12_sum/np.max(W12)
 
   s_min, t_min = np.unravel_index(W12.argmin(), W12.shape)
@@ -36,18 +36,18 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
   #print(f"t_min: {t_min}, t_max: {t_max}")
   #print(f"np.absolute((s_max - s_min) * (t_max - t_min)):{x}")
   eps = 1e-5
-  f4 = W12_sum/(x+eps)
-  f5 = np.sqrt((np.sum((f4 - W12) ** 2))/(x+eps))
+  f4 = W12_sum/(x+eps)#; f4*=100
+  f5 = np.sqrt((np.sum((f4 - W12) ** 2))/(x+eps))#; f5*=10
 
-  f6 = s_max     #doubt
-  f7 = t_max      #doubt
-  f8 = s_min      #doubt
+  f6 = s_max#; f6*=100     #doubt
+  f7 = t_max#; f7*=10      #doubt
+  f8 = s_min#; f8*=1000      #doubt
 
-  f9 = 5*W12_sum/(x+eps)
-  f10 = np.sum(W12 ** 2)
-  f11 = f10/(x+eps)
-  f12 = np.sqrt(f11)
-  f13 = W12_sum/(np.exp(x)+eps)
+  f9 = 5*W12_sum/(x+eps)#; f9*=100
+  f10 = np.sum(W12 ** 2)#; f10/=100000
+  f11 = f10/(x+eps); #f11*=1000000
+  f12 = np.sqrt(f11)#; f12*=1000
+  #f13 = (W12_sum)/(np.exp(x)+eps)
   #f14 = 
   #f15 = f14/x
   #f16 = np.sqrt((f14**2)/x)
@@ -56,7 +56,7 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
   #f15 = "N/A"
   #f16 = "N/A"
   #f17 = "N/A"
-  f14 = W12_sum
+  f14 = W12_sum  #; f14/=1000
   #f19 = "N/A"
   #f20 = "N/A"
   #f21 = "N/A"
@@ -64,7 +64,8 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
   #f23 = "N/A"
   #f24 = "N/A"
   #f25 = "N/A"
-
+  #f15=np.exp(x)+eps
+  #f16=W12_sum
   #accum = 0
   # accum_sq = 0
   # for i in range(total_scales):
@@ -105,7 +106,7 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
 
   # f42 = R12_sum
 
-  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14]
+  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f14,]
   F = []
   for i in f:
     F.append(i/1e4)
