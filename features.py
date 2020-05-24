@@ -1,71 +1,121 @@
 import numpy as np
 import pycwt as wavelet
+import cmath, math
+from utils import get_sums,get_sums2
+from sklearn.metrics.pairwise import cosine_similarity
+from line_profiler import LineProfiler
+'''
+pycwt.xwt()
+Parameters:	
+y2 (y1,) – Input signal array to calculate cross wavelet transform.
+dt (float) – Sample spacing.
+dj (float, optional) – Spacing between discrete scales. Default value is 1/12. Smaller values will result in better scale resolution, but slower calculation and plot.
+s0 (float, optional) – Smallest scale of the wavelet. Default value is 2*dt.
+J (float, optional) – Number of scales less one. Scales range from s0 up to s0 * 2**(J * dj), which gives a total of (J + 1) scales. Default is J = (log2(N*dt/so))/dj.
+wavelet (instance of a wavelet class, optional) – Mother wavelet class. Default is Morlet wavelet.
+significance_level (float, optional) – Significance level to use. Default is 0.95.
+normalize (bool, optional) – If set to true, normalizes CWT by the standard deviation of the signals.
+Returns:	
+xwt (array like) – Cross wavelet transform according to the selected mother wavelet.
+x (array like) – Intersected independent variable.
+coi (array like) – Cone of influence, which is a vector of N points containing the maximum Fourier period of useful information at that particular time. Periods greater than those are subject to edge effects.
+freqs (array like) – Vector of Fourier equivalent frequencies (in 1 / time units) that correspond to the wavelet scales.
+signif (array like) – Significance levels as a function of scale.
+'''
+ref_segments = np.load('/content/drive/My Drive/cross/Cross-spectrum-EEG-master/reference_segments.npy', allow_pickle=True).reshape(-1, 1)[0][0]
 
-
-def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
+@profile
+def feature_gen(t1, s1, t2, s2, ref_label):   
   
-  dt = np.diff(t1)[0]
-  W12, cross_coi, freq, signif= wavelet.xwt(s1, s2, dt, dj=1/24)
+  #print(f"t1={t1}; s1={s1};")
+  #print(f"t2={t2}; s2={s2}")
+  #print(f"Length of s1={len(s1)}")
+  #print(f"Length of s2={len(s2)}")
+  #dt = np.diff(t1)[0]
+  dt=1/125
+  #W12_complex, cross_coi, freq, signif= wavelet.xwt(s1, s2, dt, dj=1/24, normalize=True)
+  W12_complex, _, _, _= wavelet.xwt(s1, s2, dt, dj=1/12)                  #TAKING TOO MUCH TIME
   #R12, aWCT, corr_coi, freq, sig = wavelet.wct(s1, s2, dt, dj=1/24, cache=True)
-  #assert(W12.shape == R12.shape)  
-  # print(W12)
-  # print("****************************************")
-  W12 = np.abs(W12)   #row->scale, col->time
+  #find_phase=np.vectorize(cmath.phase)
+  W12_phase=np.abs(np.angle(W12_complex))                   #TAKING TOO MUCH TIME
+  W12 = np.abs(W12_complex)   #row->scale, col->time
+  #print("hello")
+  assert(W12_phase.shape == W12_complex.shape)  
+  #print("world")
+  #print(W12_phase)
+  #print("****************************************")
   # print(W12)
 
   total_scales = W12.shape[0]
   total_time = W12.shape[1]
   
-  accum = 0
-  accum_sq = 0
-  for i in range(total_scales):
-    for j in range(total_time):
-      accum += i * j * W12[i, j]
-      accum_sq += i**2 * j**2 * W12[i, j]
+  accum, accum_sq = get_sums(W12)                             #TAKING TOO MUCH TIME
+  accum_phase, accum_sq_phase=get_sums(W12_phase)             #TAKING TOO MUCH TIME
 
-  W12_sum = np.sum(np.absolute(W12));
+  W12_phase_sum=np.sum(W12_phase)
+  W12_sum = np.sum(W12)
   #print(f"W12_sum:{W12_sum}")
-  f1 = accum/W12_sum; #f1/=10
-  f2 = np.sqrt(accum_sq/W12_sum)#; f2/=10
+  f1 = accum/W12_sum
+  f2 = np.sqrt(accum_sq/W12_sum)
   f3 = W12_sum/np.max(W12)
 
   s_min, t_min = np.unravel_index(W12.argmin(), W12.shape)
   s_max, t_max = np.unravel_index(W12.argmax(), W12.shape)
-  x = np.absolute((s_max - s_min) * (t_max - t_min))   #doubt
+  x = np.absolute((s_max - s_min) * (t_max - t_min))  #doubt
   #print(f"s_min: {s_min}, s_max: {s_max}")
   #print(f"t_min: {t_min}, t_max: {t_max}")
   #print(f"np.absolute((s_max - s_min) * (t_max - t_min)):{x}")
   eps = 1e-5
-  f4 = W12_sum/(x+eps)#; f4*=100
-  f5 = np.sqrt((np.sum((f4 - W12) ** 2))/(x+eps))#; f5*=10
+  f4 = W12_sum/(x+eps)
+  f5 = np.sqrt((np.sum((np.square(f4 - W12))))/(x+eps))
 
-  f6 = s_max#; f6*=100     #doubt
-  f7 = t_max#; f7*=10      #doubt
-  f8 = s_min#; f8*=1000      #doubt
+  f6 = s_max     #doubt
+  f7 = t_max      #doubt
+  f8 = s_min      #doubt
 
-  f9 = 5*W12_sum/(x+eps)#; f9*=100
-  f10 = np.sum(W12 ** 2)#; f10/=100000
-  f11 = f10/(x+eps); #f11*=1000000
-  f12 = np.sqrt(f11)#; f12*=1000
-  #f13 = (W12_sum)/(np.exp(x)+eps)
-  #f14 = 
-  #f15 = f14/x
-  #f16 = np.sqrt((f14**2)/x)
-  #f17 = np.log10(f14)
-  #f14 = "N/A"
-  #f15 = "N/A"
-  #f16 = "N/A"
-  #f17 = "N/A"
-  f14 = W12_sum  #; f14/=1000
-  #f19 = "N/A"
-  #f20 = "N/A"
-  #f21 = "N/A"
-  #f22 = "N/A"
-  #f23 = "N/A"
-  #f24 = "N/A"
-  #f25 = "N/A"
-  #f15=np.exp(x)+eps
-  #f16=W12_sum
+  f9 = 0.5*W12_sum/(x+eps)
+  f10 = np.sum(np.square(W12 ))
+  f11 = f10/(x+eps)
+  f12 = np.sqrt(f11)
+  f13 = np.exp(min(W12_sum/(x*10),700))
+  #print(f"x is{W12_sum/(x*10)}")
+  w=np.array(W12)
+  s=0
+  for i in range(1,total_scales):
+    s+=np.sum(np.square(w[i,:]-w[i-1,:]))
+    #for j in range(total_time):
+      #s+=np.square(W12[i][j]-W12[i-1][j])
+  consec_scale_diff=np.sqrt(s)
+  
+  s=0
+  for j in range(1,total_time):                            
+    s+=np.sum(np.square(w[:,j]-w[:,j-1]))             #TAKING TOO MUCH TIME
+  consec_time_diff=np.sqrt(s)
+
+  f14 = consec_scale_diff*consec_time_diff
+  f15 = f14/(x+eps)
+  f16 = np.sqrt((f14**2)/(x+eps))
+  f17 = np.log10(f14)
+  f18 = W12_sum
+  f19 = accum_phase/W12_phase_sum
+  f20 = np.sqrt(accum_sq_phase/W12_phase_sum)
+  f21 = W12_phase_sum
+  f22 = W12_phase_sum/(np.max(W12_phase))
+  f23 = W12_phase_sum/(x+eps)
+  f24 = np.sqrt((np.sum(np.square((f22-W12_phase))))/(x+eps))
+  f25 = 0.5*(W12_phase_sum)/(x+eps)
+  mean_class_vector=[]
+  for ref_segment in ref_segments[ref_label]:
+    mean_class_vector.append(ref_segment)
+    #print(np.shape(ref_segment))
+  #print(f"shape of mean class vector: {np.shape(mean_class_vector)}")  
+  mcv=np.mean(mean_class_vector,axis=0)
+  f26 = np.sqrt(np.sum(np.square(s1-mcv)))     #euclidean distance between s1 and mcv ?
+  f27 = cosine_similarity(s1.reshape(1,-1),mcv.reshape(1,-1), dense_output=True).reshape(1,1)[0][0]
+  #print(f"cosine shape: {print(np.shape(f27))}")
+  #print(f"f27:{f27}")
+
+
   #accum = 0
   # accum_sq = 0
   # for i in range(total_scales):
@@ -73,14 +123,15 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
   #     accum += i * j * R12[i, j]
   #     accum_sq += i**2 * j**2 * R12[i, j]
 
-  # R12_sum = np.sum(R12)
+  #R12_sum = np.sum(R12)
   # print(f"R12_sum:{R12_sum}")
-  # f26 = accum/R12_sum
-  # f27 = np.sqrt(accum_sq/R12_sum)
+  #accumr,accumr_sq=get_sums(R12)
+  #f28 = accumr/R12_sum
+  #f29 = np.sqrt(accumr_sq/R12_sum)
 
-  # s_min, t_min = np.unravel_index(R12.argmin(), R12.shape)
-  # s_max, t_max = np.unravel_index(R12.argmax(), R12.shape)
-  # x = np.absolute((s_max - s_min) * (t_max - t_min))   #doubt
+  #s_min, t_min = np.unravel_index(R12.argmin(), R12.shape)
+  #s_max, t_max = np.unravel_index(R12.argmax(), R12.shape)
+  #x = np.absolute((s_max - s_min) * (t_max - t_min))   #doubt
 
   # print(s_min, s_max)
   # print(t_min, t_max)
@@ -106,7 +157,7 @@ def feature_gen(t1, s1, t2, s2):   #takes abs W12 as input
 
   # f42 = R12_sum
 
-  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f14,]
+  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27]
   F = []
   for i in f:
     F.append(i/1e4)
