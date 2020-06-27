@@ -3,11 +3,12 @@ import pandas as pd
 from IPython.display import display
 from utils import out_std, out_iqr, describe
 from constants import NUM_SLEEP_STAGES, NUM_FEATURES
+from scipy.stats import kurtosis
 
 train=0
 test=1
 
-skew_after={train: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}, test: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]} }
+
 
 
 def trimming(df, y, get_cutoffs, details):
@@ -145,6 +146,7 @@ def treat_train_outliers(identification, treatment, details=True):
     
     for feat in range(NUM_FEATURES):
       skew_after[train][label].append(df[feat].skew())
+      kurtosis_after[train][label].append(kurtosis(df[feat]))
 
     if details: display(describe(df))
 
@@ -177,6 +179,7 @@ def treat_test_outliers(identification, treatment, details=True):
 
     for feat in range(NUM_FEATURES):
       skew_after[test][i].append(df[feat].skew())
+      kurtosis_after[test][i].append(kurtosis(df[feat]))
 
     data = []
     for f, l in zip(df.to_numpy(), y):
@@ -193,33 +196,65 @@ if __name__ == "__main__":
 
   for identification in ids:
     for treatment in treatments:
+      skew_after={train: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}, test: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]} }
+      kurtosis_after={train: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]}, test: {0:[], 1:[], 2:[], 3:[], 4:[], 5:[]} }
       print(f"Identification:{identification}; treatment:{treatment}")
       treat_train_outliers(identification, treatment, details=True)
       treat_test_outliers(identification, treatment, details=True)
       np.save(f'/content/drive/My Drive/Cross-spectrum-EEG/datasets/skew_after/skew_after_{identification}_{treatment}.npy', skew_after)
+      np.save(f'/content/drive/My Drive/Cross-spectrum-EEG/datasets/kurtosis_after/kurtosis_after_{identification}_{treatment}.npy', kurtosis_after)
 '''
+
 count=0
-length_of_skew_arrays=NUM_FEATURES*NUM_SLEEP_STAGES*2
+length_of_skew_arrays=length_of_kurtosis_arrays=NUM_FEATURES*NUM_SLEEP_STAGES*2
 compare_skew=[]
+compare_kurtosis=[]
+
 for identification in ids:
   for treatment in treatments: 
     d=np.load(f'/content/drive/My Drive/Cross-spectrum-EEG/datasets/skew_after/skew_after_{identification}_{treatment}.npy',allow_pickle=True).item()
+    e=np.load(f'/content/drive/My Drive/Cross-spectrum-EEG/datasets/kurtosis_after/kurtosis_after_{identification}_{treatment}.npy',allow_pickle=True).item()
     skew_values=[]
+    kurtosis_values=[]
     for t in [train,test]:
       for label in range(NUM_SLEEP_STAGES):
         for feat_no in range(NUM_FEATURES):
           skew_values.append(d[t][label][feat_no])
+          kurtosis_values.append(e[t][label][feat_no])
+
+
     compare_skew.append(skew_values)
+    compare_kurtosis.append(kurtosis_values)
  
 
 compare_skew=np.array(compare_skew)
-np.save('/content/drive/My Drive/Cross-spectrum-EEG/datasets/skew_after/compare_skew.npy',compare_skew)
-print(np.shape(compare_skew))
-best_combinations=np.argmin(np.abs(compare_skew),axis=0)
-uniq=np.unique(best_combinations,return_counts=True)
-#print(uniq)
+compare_kurtosis=np.array(compare_kurtosis)
 
+np.save('/content/drive/My Drive/Cross-spectrum-EEG/datasets/skew_after/compare_skew.npy',compare_skew)
+np.save('/content/drive/My Drive/Cross-spectrum-EEG/datasets/kurtosis_after/compare_kurtosis.npy',compare_kurtosis)
+
+print(np.shape(compare_kurtosis))
+
+best_combinations_for_skew=np.argmin(np.abs(compare_skew),axis=0)
+best_combinations_for_kurtosis=np.argmin(np.abs(compare_kurtosis),axis=0)
+
+uniq_s=np.unique(best_combinations_for_skew,return_counts=True)
+uniq_k=np.unique(best_combinations_for_kurtosis,return_counts=True)
+print(uniq_s)
+print(uniq_k)
+
+print("SKEWNESS")
+count=0
 for identification in ids:
   for treatment in treatments: 
-    print(f'identification: {identification} + treatment {treatment}:   {uniq[1][count]}')
+    print(f'identification: {identification} + treatment {treatment}:   {uniq_s[1][count]}')
+
+    count+=1
+
+print("KURTOSIS")
+count=0
+for identification in ids:
+  for treatment in treatments: 
+    print(f'identification: {identification} + treatment {treatment}:   {uniq_k[1][count]}')
+
     count+=1
