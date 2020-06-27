@@ -23,10 +23,12 @@ coi (array like) – Cone of influence, which is a vector of N points containing
 freqs (array like) – Vector of Fourier equivalent frequencies (in 1 / time units) that correspond to the wavelet scales.
 signif (array like) – Significance levels as a function of scale.
 '''
-ref_segments = np.load('/content/drive/My Drive/cross/Cross-spectrum-EEG-master/reference_segments.npy', allow_pickle=True).reshape(-1, 1)[0][0]
+ref_segments = np.load('/content/drive/My Drive/Cross-spectrum-EEG/reference_segments.npy', allow_pickle=True).reshape(-1, 1)[0][0]
+
+profile=LineProfiler()
 
 @profile
-def feature_gen(t1, s1, t2, s2, ref_label):   
+def feature_gen(s1, s2, ref_label):   
   
   #print(f"t1={t1}; s1={s1};")
   #print(f"t2={t2}; s2={s2}")
@@ -60,9 +62,7 @@ def feature_gen(t1, s1, t2, s2, ref_label):
   s_min, t_min = np.unravel_index(W12.argmin(), W12.shape)
   s_max, t_max = np.unravel_index(W12.argmax(), W12.shape)
   x = np.absolute((s_max - s_min) * (t_max - t_min))  #doubt
-  #print(f"s_min: {s_min}, s_max: {s_max}")
-  #print(f"t_min: {t_min}, t_max: {t_max}")
-  #print(f"np.absolute((s_max - s_min) * (t_max - t_min)):{x}")
+
   eps = 1e-5
   f4 = W12_sum/(x+eps)
   f5 = np.sqrt((np.sum((np.square(f4 - W12))))/(x+eps))
@@ -75,7 +75,7 @@ def feature_gen(t1, s1, t2, s2, ref_label):
   f10 = np.sum(np.square(W12 ))
   f11 = f10/(x+eps)
   f12 = np.sqrt(f11)
-  f13 = np.exp(min(W12_sum/((x+eps)*10),700))
+  #f13 = np.exp(min(W12_sum/((x+eps)*10),700))
   #print(f"x is{W12_sum/(x*10)}")
   w=np.array(W12)
   s=0
@@ -122,49 +122,7 @@ def feature_gen(t1, s1, t2, s2, ref_label):
   f33=trim_mean(corr,0.1)
 
 
-
-  #accum = 0
-  # accum_sq = 0
-  # for i in range(total_scales):
-  #   for j in range(total_time):
-  #     accum += i * j * R12[i, j]
-  #     accum_sq += i**2 * j**2 * R12[i, j]
-
-  #R12_sum = np.sum(R12)
-  # print(f"R12_sum:{R12_sum}")
-  #accumr,accumr_sq=get_sums(R12)
-  #f28 = accumr/R12_sum
-  #f29 = np.sqrt(accumr_sq/R12_sum)
-
-  #s_min, t_min = np.unravel_index(R12.argmin(), R12.shape)
-  #s_max, t_max = np.unravel_index(R12.argmax(), R12.shape)
-  #x = np.absolute((s_max - s_min) * (t_max - t_min))   #doubt
-
-  # print(s_min, s_max)
-  # print(t_min, t_max)
-  # print(f"x2:{x}")
-  # f28 = t_max     #doubt
-  # f29 = s_min      #doubt
-  # f30 = R12_sum/np.max(R12) #doubt
-  # f31 = R12_sum/x
-  # f32 = np.sqrt((np.sum((f30 - R12)))) #doubt
-  # f33 = 5*R12_sum/x
-  # f34 = np.sum(R12 ** 2)
-
-  # f35 = f34/x
-  # f36 = np.sqrt(np.absolute(f35))
-  # f37 = R12_sum/np.exp(x)
-  # f38 = "N/A"
-  # f39 = "N/A"
-  # f40 = "N/A"
-  # f41 = "N/A"
-  # #f39 = f14/x
-  # #f40 = np.sqrt((f14**2)/x)
-  # #f41 = np.log10(f14)
-
-  # f42 = R12_sum
-
-  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28,f29,f30,f31,f32,f33]
+  f = [f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f14,f15,f16,f17,f18,f19,f20,f21,f22,f23,f24,f25,f26,f27,f28,f29,f30,f31,f32,f33]
   F = []
   for i in f:
     F.append(i)
