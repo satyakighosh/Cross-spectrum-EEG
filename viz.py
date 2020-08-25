@@ -1,8 +1,6 @@
-
 import numpy as np
 import pandas as pd
 
-path='/content/drive/My Drive/Cross-spectrum-EEG/datasets'
 
 def display_histogram_train(path):
   for i in range(6):
@@ -19,3 +17,4 @@ def display_histogram_test(path):
     X = np.array(list(data[:, 1]), dtype=np.float)
     df = pd.DataFrame(data=X)
     df.hist(figsize=(60,60))
+

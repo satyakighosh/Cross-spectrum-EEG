@@ -2,8 +2,11 @@ import time
 import numpy as np
 import pickle
 from sklearn.svm import SVC
+from scipy.stats import mode
+from itertools import combinations 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import SGDClassifier, LogisticRegression
+from sklearn.utils.class_weight import compute_class_weight
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 from constants import *
 from utils import *
@@ -13,37 +16,56 @@ start = time.time()
 
 train = False
 test = True
-
+preprocessing = 'standardize'
+#preprocessing = 'normalize'
 
 if train == True:
   t1 = time.time()
-  sleep_stages = [0,1,2,3,4,5] #clf_ids
+  sleep_stages = [0,1,2,3,4] #clf_ids
 
-  for clf_id in sleep_stages:
+  print("Training model....")
+
+  combos = list(combinations(list(range(NUM_SLEEP_STAGES)), 2))
+  #combos = list(combinations(list(range(6)), 2))
+  
+  for idx, (clf_id1, clf_id2) in enumerate(combos):
+
     t2 = time.time()
     print("*****************************************************")
-    print(f"CLF_ID:{clf_id}")
+    print(f"{idx}. CLF_ID1: {clf_id1}, CLF_ID2: {clf_id2}")
 
-    data_list = np.load(f'/content/cleaned_data/clf_smote{clf_id}.npy', allow_pickle=True)
+    data_list1 = np.load(f'/content/cleaned_data/clf{clf_id1}.npy', allow_pickle=True)
+    data_list2 = np.load(f'/content/cleaned_data/clf{clf_id2}.npy', allow_pickle=True)
+
+    X_train, Y_train = split_datalist(data_list1, clf_id1, data_list2, clf_id2)
+
     
-    X_train, Y_train = split_datalist(data_list, clf_id)
+    print(X_train.shape)
     print(f"Y_train: {np.unique(Y_train, return_counts=True)}")
-    X_train = preprocess(X_train)
+    print(f"preprocessing: {preprocessing}")
+    X_train = preprocess(X_train, preprocessing)
     
-    # print(f"Example of training feature vector: {X_train[clf_id]}")
-    # print(f"It's corresponding label: {Y_train[clf_id]}")
-    # print("*****************************************************")
-    #clf = SGDClassifier(loss='hinge', verbose=1, class_weight=weights_dict)
-    #clf = LogisticRegression(class_weight=weights_dict, max_iter=10000)
-    #clf = RandomForestClassifier(class_weight=weights_dict, max_depth=100, random_state=0)
-    
-    clf = SVC()
+    classes = [-1, clf_id1, clf_id2]
+    params = {
+          'class_weight': 'balanced',
+          'classes': classes,
+          'y': list(Y_train) 
+          }
+
+    weights = compute_class_weight(**params)
+    weights_dict = {}
+    for c, w in zip(classes, weights):
+      weights_dict[c] = w
+
+    print(weights_dict)
+    clf = SVC(class_weight=weights_dict)
     clf.fit(X_train, Y_train)
 
-    print(f"Training clf_{clf_id} complete!")
+    print(f"Training clf_{clf_id1}{clf_id2} complete!")
     print("Saving model..")
     
-    pickle.dump(clf, open(f'/content/drive/My Drive/Cross-spectrum-EEG/trained_models/clf_{clf_id}.sav','wb'))
+    pickle.dump(clf, open(f'/content/drive/My Drive/Cross-spectrum-EEG/trained_models/clf_{clf_id1}{clf_id2}.sav','wb'))
+    #pickle.dump(clf, open(f'/content/clf_{clf_id1}{clf_id2}.sav','wb'))
 
     print(f"Total time taken for this sleep stage: {time.time()-t2} seconds")
     print("*****************************************************")
@@ -56,59 +78,64 @@ if train == True:
 
 if test == True: 
 
-  test_set = np.load('/content/drive/My Drive/Cross-spectrum-EEG/datasets/cleaned_data (ouliers)/test.npy', allow_pickle=True)
-  test_set_dict = test_set.reshape(-1,1)[0][0]
+  #path = '/content/'
   path = '/content/drive/My Drive/Cross-spectrum-EEG/trained_models/'
 
   #loading trained models
-  clf_0 = pickle.load(open(path + 'clf_0.sav','rb'))
-  clf_1 = pickle.load(open(path + 'clf_1.sav','rb'))
-  clf_2 = pickle.load(open(path + 'clf_2.sav','rb'))
-  clf_3 = pickle.load(open(path + 'clf_3.sav','rb'))
-  clf_4 = pickle.load(open(path + 'clf_4.sav','rb'))
-  clf_5 = pickle.load(open(path + 'clf_5.sav','rb'))
+  clf_01 = pickle.load(open(path + 'clf_01.sav','rb'))
+  clf_02 = pickle.load(open(path + 'clf_02.sav','rb'))
+  clf_03 = pickle.load(open(path + 'clf_03.sav','rb'))
+  clf_04 = pickle.load(open(path + 'clf_04.sav','rb'))
+  clf_12 = pickle.load(open(path + 'clf_12.sav','rb'))
+  clf_13 = pickle.load(open(path + 'clf_13.sav','rb'))
+  clf_14 = pickle.load(open(path + 'clf_14.sav','rb'))
+  clf_23 = pickle.load(open(path + 'clf_23.sav','rb'))
+  clf_24 = pickle.load(open(path + 'clf_24.sav','rb'))
+  clf_34 = pickle.load(open(path + 'clf_34.sav','rb'))
 
-  CLF = [clf_0, clf_1, clf_2, clf_3, clf_4, clf_5]    # list of classifiers
+  CLF = [clf_01, clf_02, clf_03, clf_04, clf_12, clf_13, clf_14, clf_23, clf_24, clf_34]    # list of classifiers
 
+  test_set = np.load('/content/drive/My Drive/ref5_dj6/test_set_balanced_ref5.npy', allow_pickle=True)
+  test_set_dict = test_set.reshape(-1,1)[0][0]
   X_test, Y_test = split_dataset(test_set_dict)
-  X_test = preprocess_test(X_test)
-  print(f"X_test.shape :{X_test.shape}")        
- 
-  distances_from_hyperplane = []
-  for clf_id in range(NUM_SLEEP_STAGES):
-    distances_from_hyperplane.append(CLF[clf_id].decision_function(X_test[clf_id]))
+  X_test = preprocess_test(X_test, preprocessing)
+  print(X_test.shape)
+  preds = []
+  Y_preds = []
+  combos = list(combinations(list(range(NUM_SLEEP_STAGES)), 2))
 
-  #(+ve) distance->on the positive side of hyperplane, confidence is directly proportional to the absolute value of the distance
-  distances_from_hyperplane = np.array(distances_from_hyperplane) 
-  print(f"distances_from_hyperplane.shape :{distances_from_hyperplane.shape}")        #(6, test_size)
-  
-  Y_preds = []    #highest
-  Y_preds2 = []   #2nd highest
+  for idx, (clf_id1, clf_id2) in enumerate(combos):
+    print(idx, clf_id1, clf_id2)
 
-  #loop over the sample axis
-  for i in range(distances_from_hyperplane.shape[1]):
-    # print(i, distances_from_hyperplane[:, i])  #distances of a particular sample from hyperplanes of corresponding classifiers-> (6, )
-    # print(f"Actual label: {Y_test[i]}")
-    # print(f"Distance1: {np.argmax(distances_from_hyperplane[:, i])}->{np.max(distances_from_hyperplane[:, i])}")
-    # print(f"Distance2: {np.argsort(distances_from_hyperplane[:, i])[-2]}->{np.sort(distances_from_hyperplane[:, i])[-2]}")
-    # print()
-    Y_preds.append(np.argmax(distances_from_hyperplane[:, i]))    #prediction is the label corresponding to which highest distance is obtained
-    # Y_preds2.append(np.argsort(distances_from_hyperplane[:, i])[-2])    #prediction is the label corresponding to which 2nd highest distance is obtained
+    pred = CLF[idx].predict(np.concatenate((X_test[clf_id1], X_test[clf_id2]), axis=1))
+    print(np.unique(pred, return_counts=True))
+    preds.append(pred)
 
+  preds = np.array(preds)
+
+  preds = preds.T
+  for i in range(preds.shape[0]):  #over sample axis
+    U = preds[i, :]
+    x = mode(U[U!=-1])
+    if x[0].shape==(0,):         #if all -1
+      md = np.random.randint(6)
+    else:
+      md = x[0][0]
+    if md!=Y_test[i]:
+      print(U)
+      print(md)
+      print(Y_test[i])
+      print()
+    Y_preds.append(md)      #Take the mode over values other than -1(none)
 
   print(f"Y_preds: {Y_preds}")
-  # np.save('Y_test.npy', Y_test)
-  # np.save('preds.npy', Y_preds)
-  # np.save('preds2.npy', Y_preds2)
   print("#####################################################")
   print(f"Y_test: {Y_test}")
   print(f"Accuracy: {accuracy_score(Y_test, Y_preds)}")
   print(f"Confusion matrix: \n{confusion_matrix(Y_test, Y_preds)}")
   print(f"Classification Report:\n {classification_report(Y_test, Y_preds)}")
   print()
-  # print(f"Accuracy: {accuracy_score(Y_test, Y_preds2)}")
-  # print(f"Confusion matrix: \n{confusion_matrix(Y_test, Y_preds2)}")
-  # print(f"Classification Report:\n {classification_report(Y_test, Y_preds2)}")
+
   print("*****************************************************************************")
 
 print(f"The whole process took {time.time()-start} seconds")
